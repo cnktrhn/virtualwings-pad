@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Virtual Wings – Pilot Pad</title>
+
+<style>
+body {
+    margin:0;
+    background:#0b0f17;
+    color:#00ff88;
+    font-family:Arial, sans-serif;
+}
+
+header {
+    text-align:center;
+    padding:15px;
+    font-size:22px;
+    font-weight:bold;
+    background:#121826;
+    letter-spacing:1px;
+}
+
+.form-section {
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px,1fr));
+    gap:8px;
+    padding:15px;
+}
+
+input {
+    background:#1a2233;
+    border:1px solid #00ff88;
+    color:#00ff88;
+    padding:8px;
+    border-radius:6px;
+}
+
+canvas {
+    background:white;
+    display:block;
+    margin:0 auto;
+    border-radius:12px;
+    touch-action:none;
+}
+
+.controls {
+    text-align:center;
+    padding:15px;
+}
+
+button {
+    background:#00ff88;
+    border:none;
+    padding:10px 15px;
+    margin:5px;
+    font-weight:bold;
+    border-radius:6px;
+    cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<header>✈️ VIRTUAL WINGS – PILOT PAD</header>
+
+<div class="form-section">
+<input id="callsign" placeholder="Callsign">
+<input id="dep" placeholder="Departure">
+<input id="arr" placeholder="Arrival">
+<input id="squawk" placeholder="Squawk">
+<input id="qnh" placeholder="QNH">
+<input id="rwy" placeholder="Runway">
+<input id="sid" placeholder="SID">
+<input id="climb" placeholder="Initial Climb">
+</div>
+
+<canvas id="pad"></canvas>
+
+<div class="controls">
+<button onclick="clearPad()">Clear</button>
+<button onclick="saveData()">Save</button>
+<button onclick="exportPDF()">Export PDF</button>
+</div>
+
+<script>
+const canvas = document.getElementById('pad');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth - 40;
+    canvas.height = window.innerHeight * 0.5;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+let drawing = false;
+
+canvas.addEventListener('pointerdown', e => {
+    drawing = true;
+    ctx.beginPath();
+    ctx.moveTo(e.offsetX, e.offsetY);
+});
+
+canvas.addEventListener('pointermove', e => {
+    if (!drawing) return;
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "black";
+    ctx.lineTo(e.offsetX, e.offsetY);
+    ctx.stroke();
+});
+
+canvas.addEventListener('pointerup', () => drawing = false);
+canvas.addEventListener('pointercancel', () => drawing = false);
+
+function clearPad() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function saveData() {
+    const data = {
+        callsign: callsign.value,
+        dep: dep.value,
+        arr: arr.value,
+        squawk: squawk.value,
+        qnh: qnh.value,
+        rwy: rwy.value,
+        sid: sid.value,
+        climb: climb.value,
+        drawing: canvas.toDataURL()
+    };
+    localStorage.setItem("vwFlight", JSON.stringify(data));
+    alert("Flight Saved Successfully ✈️");
+}
+
+function loadData() {
+    const saved = localStorage.getItem("vwFlight");
+    if (!saved) return;
+    const data = JSON.parse(saved);
+
+    callsign.value = data.callsign;
+    dep.value = data.dep;
+    arr.value = data.arr;
+    squawk.value = data.squawk;
+    qnh.value = data.qnh;
+    rwy.value = data.rwy;
+    sid.value = data.sid;
+    climb.value = data.climb;
+
+    const img = new Image();
+    img.src = data.drawing;
+    img.onload = () => ctx.drawImage(img, 0, 0);
+}
+
+function exportPDF() {
+    const link = document.createElement('a');
+    link.download = "virtual_wings_flight.png";
+    link.href = canvas.toDataURL();
+    link.click();
+}
+
+loadData();
+</script>
+
+</body>
+</html>
